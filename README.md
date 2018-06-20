@@ -89,7 +89,7 @@ Clicking the `Cancel` button aborts the writing of the file.
 
 The video below demonstrates the use of the WireIt tools:
 
-[![WireIt Demo](https://youtu.be/-FPzxCktdcs/0.jpg)](https://youtu.be/-FPzxCktdcs)
+[![WireIt Demo](video_thumbnail.png)](https://youtu.be/-FPzxCktdcs)
 
 ## Credits
 
