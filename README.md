@@ -1,8 +1,7 @@
-# PadPainter Plugin
+# WireIt Plugin
 
-This PCBNEW plugin identifies pins that meet specified criteria and highlights
-the associated pads on the PCB.
-This is helpful for identifying sets of related pins when physically planning
+This PCBNEW plugin lets you add wires between pads on a PCB, delete them, and swap wires between pads.
+This is helpful for physically connecting sets of related pins when doing
 the layout of high pin-count packages such as FPGAs.
 
 * Free software: MIT license
@@ -10,118 +9,87 @@ the layout of high pin-count packages such as FPGAs.
 
 ## Features
 
-* Highlights selected pads in one or more footprints of a PCB.
-* Footprints are selected using their part reference.
-* Pads within a footprint are filtered by their numbers, names, pin function (e.g., input, output, bidirectional),
-  and unit (for multi-unit parts such as I/O banks in an FPGA).
+* Connect two or more pads to each other or to an existing net.
+* Remove one or more pads from a net.
+* Swap the nets connecting two pads.
+* Output a file containing the changes made to the netlist.
 
 
 ## Installation
 
-Just copy `PadPainter.py` to the `kicad/share/kicad/scripting/plugins` directory.
+Just copy `WireIt.py` file and the `WireIt_icons` directory to the `kicad/share/kicad/scripting/plugins` directory.
 
 
 ## Usage
 
-The plugin is started by pressing the `Tools => External Plugins... => PadPainter` button.
-This brings up the following window:
+The plugin is started by pressing the `Tools => External Plugins... => WireIt` button.
+This adds a button to the PCBNEW window for each of the four WireIt tools:
 
-![](padpainter_window_startup.png)
+![](WireIt_buttons.png)
 
-### Netlist File Field
+### The WireIt Tool
 
-The `Netlist File` field is used to specify the netlist associated with the PCB.
-This is used to determine the pin names and electrical properties of the pads
-in the PCB footprints.
+This tool is used to create an *airwire* between two or more pads.
+It is used as follows:
 
-Upon startup, PadPainter will populate this field with a file name based on 
-the PCB file name with a `.net` extension. You are free to change this by 
-typing a new name, selecting a new file using the file browser, or by 
-dragging a new netlist file into the field.
- 
-### Parts Field
+1. Select one or more pads on the PCB using the shift-click mouse operation.
+2. Click on the ![](WireIt_icons/wire_it.png) button.
 
-The parts whose pads will be highlighted are specified as a comma-separated list
-of part reference IDs in the `Parts` field.
-If one or more parts are selected before starting PadPainter, then this field
-will be pre-populated with their reference IDs.
-Otherwise, you'll just type-in the IDs for the parts you want to highlight.
+After clicking on the WireIt button, one of the following will happen:
 
-After entering the part IDs, make sure to press the ENTER key.
-This signals PadPainter that it should look-up the information on the given 
-parts.
+* If all of the pads were unconnected, a dialog window will appear where you can
+  type in the name of the new net that will connect them. Pressing the `OK`
+  button will cause an airwire to appear between the selected pads.
+  Pressing `Cancel` will abort the creation of the airwire.
+* If one or more of the pads are already connected to the *same* net, then
+  any unconnected pads will be added to that net. No dialog window for naming
+  the net will appear because the net already has a name.
+* If two or more of the pads are already connected to *different* nets, then
+  an error will be raised because merging nets together is not allowed.
 
-### Units Field
+### The CutIt Tool
 
-This field lists the names of the units found in the parts specified in the 
-`Parts` field. (Most high pin-count parts are broken up into multiple units, 
-each of which provides some specific function.) Selecting one or more of 
-the units in this field will restrict the highlighting of pads to those 
-specific units. (Use shift-click to select a range of units, or ctrl-click 
-to select multiple, non-contiguous list entries.)
- 
-### Pin Numbers
+This tool is used to remove an airwire from one or more pads.
+It is used as follows:
 
-This field stores a
-[*Python regular expression*](https://www.datacamp.com/community/tutorials/python-regular-expression-tutorial)
-(REGEX) that is used to select pins with matching numbers from the parts.
-Upon start up, this field is pre-populated with a regular expression that 
-matches everything (`.*`).
+1. Select one or more pads on the PCB using the shift-click mouse operation.
+2. Click on the ![](WireIt_icons/cut_it.png) button.
 
-One use of this field might be to highlight a specific row of a BGA using a REGEX
-like `^A[0-9]+$` which would select all pin numbers starting with a single 
-`A` that is then followed by one or more digits (e.g., `A1` or `A18`).
- 
-### Pin Names
+After clicking on the CutIt button, any airwires atached to the selected pads
+will be removed and the pads will become unconnected.
 
-This field stores a REGEX
-that is used to select pins with matching names from the parts.
-Upon start up, this field is pre-populated with a regular expression that 
-matches everything (`.*`).
+### The SwapIt Tool
 
-One use of this field might be to highlight specific pins using a REGEX
-like `MGT` which would select all pins with names containing the string
-`MGT` (for *multigigabit transceiver*).
+This tool is used to swap the airwires connected to two pads.
+It is used as follows:
 
-### Pin Functions:
+1. Select exactly two pads using the shift-click mouse operation.
+2. Click on the ![](WireIt_icons/swap_it.png) button.
 
-These checkboxes are used to select the electrical types of the pins that 
-will be highlighted. (For instance, you can restrict PadPainter so it only 
-highlights bidirectional pins.)
- 
-`All` and `None` checkboxes are also provided to quickly enable or disable 
-all the pin function filters.
+After clicking on the SwapIt button, the airwires attached to the two pads will
+be exchanged with the first pad becoming attached to the net of the second pad
+and vice-versa.
 
-### Action Buttons
+### The DumpIt Tool
 
-Upon pressing the `Paint` or `Clear` button, PadPainter will extract all the pads
-on the given parts which:
+This tool is used to write a file with a list of the changes made by the WireIt,
+CutIt, and SwapIt tools. This is done by comparing the current PCB netlist
+with the netlist that existed when the WireIt tools were first activated.
 
-* Are members of the selected part units.
-* Have pin numbers that match with the REGEX in the `Pin Numbers` field.
-* Have pin names that match with the REGEX in the `Pin Names` field.
-* Have electrical functions that match one of the checked types in the `Pin Functions` checkboxes.
- 
-Then PadPainter will either add or clear the highlighting to the extracted pads.
-
-Pressing the `Done` button will terminate PadPainter. This will 
-not return any highlighted pads to their original state; they will remain 
-highlighted. This is essential behavior for marking pins and then doing 
-placement and routing based on the displayed information. It also allows you 
-to highlight parts and then come back later and highlight further parts 
-without losing your previous work.
+Clicking the ![](WireIt_icons/dump_it.png) button causes a dialog window to appear where you can specify
+the file to store the list of wiring changes. (You can type the file name, use
+a file browser, or drag-and-drop a file onto the text field in the dialog window.)
+Clicking the `OK` button writes a textual list of the pads whose wiring was
+changed to the file. (Any previous contents of the file will be overwritten.)
+Then you are responsible for manually backannotating the netlist changes into
+the schematic associated with this PCB layout.
+Clicking the `Cancel` button aborts the writing of the file.
  
 ### Example
 
-Here is an example of highlighting only the **three outermost columns** of 
-**I/O** pins in **bank 3** of an FPGA (**U4**):
+The video below demonstrates the use of the WireIt tools:
 
-![](example_padpainter_fields.png)
-
-Pressing `Paint` results in highlighting these pads:
-
-![](example_highlighted_pads.png)
-
+<div style="position:relative;height:0;padding-bottom:56.25%"><iframe src="https://www.youtube.com/embed/-FPzxCktdcs?ecver=2" width="640" height="360" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;width:100%;height:100%;left:0" allowfullscreen></iframe></div>
 
 ## Credits
 
@@ -136,6 +104,6 @@ None yet. Why not be the first?
 
 ## History
 
-### 0.1.0 (2018-05-28)
+### 0.1.0 (2018-06-19)
 
 * First release.
