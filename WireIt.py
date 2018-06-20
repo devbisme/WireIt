@@ -1,3 +1,27 @@
+# -*- coding: utf-8 -*-
+
+# MIT license
+#
+# Copyright (C) 2018 by XESS Corp.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 from pcbnew import *
 
 import sys
@@ -219,8 +243,9 @@ def fillin_part_info_from_lib(ref, parts):
                 continue
 
             # Look for the start of the desired part's definition.
-            part_found = (re.search(r'^DEF\s+' + part.part + r'\s+', line) or
-                re.search(r'^ALIAS\s+([^\s]+\s+)*' + part.part + r'\s+', line))
+            part_found = (re.search(
+                r'^DEF\s+' + part.part + r'\s+', line) or re.search(
+                    r'^ALIAS\s+([^\s]+\s+)*' + part.part + r'\s+', line))
 
 
 def guess_netlist_file():
@@ -242,7 +267,7 @@ class PinContention:
         OK, WARNING, ERROR = 0, 1, 2
         pin_funcs = ['I', 'O', 'B', 'T', 'W', 'w', 'P', 'U', 'C', 'E', 'N']
         INPUT, OUTPUT, BIDIR, TRISTATE, PWRIN, PWROUT, PASSIVE, UNSPEC, OPENCOLL, OPENEMIT, NOCONNECT = pin_funcs
-        erc_matrix = {f:{ff: OK for ff in pin_funcs} for f in pin_funcs}
+        erc_matrix = {f: {ff: OK for ff in pin_funcs} for f in pin_funcs}
         erc_matrix[OUTPUT][OUTPUT] = ERROR
         erc_matrix[TRISTATE][OUTPUT] = WARNING
         erc_matrix[UNSPEC][INPUT] = WARNING
@@ -286,6 +311,7 @@ class PinContention:
                     erc_matrix[s][d] = err_level
                     erc_matrix[d][s] = err_level
 
+
 class NetNameDialog(wx.Dialog):
     '''Class for getting a new net name from the user.'''
 
@@ -296,7 +322,8 @@ class NetNameDialog(wx.Dialog):
 
         panel = wx.Panel(self)
 
-        self.name_field = LabelledTextCtrl(panel, 'Net Name:', self.net_name, 'Enter name for new net.')
+        self.name_field = LabelledTextCtrl(panel, 'Net Name:', self.net_name,
+                                           'Enter name for new net.')
 
         self.ok_btn = wx.Button(panel, label='OK')
         self.cancel_btn = wx.Button(panel, label='Cancel')
@@ -333,7 +360,8 @@ class NetNameDialog(wx.Dialog):
     def cancel(self, evt):
         self.net_name = None
         self.Destroy()
-        
+
+
 def wire_it_callback(evt):
     '''Create a wire between selected pads.'''
 
@@ -341,7 +369,8 @@ def wire_it_callback(evt):
     brd = GetBoard()
     cnct = brd.GetConnectivity()
     pads = [p for p in brd.GetPads() if p.IsSelected()]
-    net_codes = list(set([p.GetNetCode() for p in brd.GetPads() if p.IsSelected()]))
+    net_codes = list(
+        set([p.GetNetCode() for p in brd.GetPads() if p.IsSelected()]))
 
     # Remove the no-connect net from the list of net IDs.
     no_connect = 0  # PCBNEW ID for the no-connect net.
@@ -382,6 +411,7 @@ def wire_it_callback(evt):
     cnct.RecalculateRatsnest()
     Refresh()
 
+
 def cut_it_callback(evt):
     '''Remove wires from selected pads.'''
 
@@ -401,6 +431,7 @@ def cut_it_callback(evt):
     cnct.RecalculateRatsnest()
     Refresh()
 
+
 def swap_it_callback(evt):
     '''Swap wires between two selected pads.'''
 
@@ -410,7 +441,8 @@ def swap_it_callback(evt):
 
     # Report error if trying to swap more or less than two pads.
     if len(pads) != 2:
-        debug_dialog('To swap pads, you must select two pads and only two pads!')
+        debug_dialog(
+            'To swap pads, you must select two pads and only two pads!')
         return
 
     # Swap nets assigned to the two pads.
@@ -423,7 +455,9 @@ def swap_it_callback(evt):
     brd.GetConnectivity().RecalculateRatsnest()
     Refresh()
 
+
 original_netlist = {}
+
 
 def get_netlist():
     '''Create a dict with part ref & pad num as the key and attached net as the value.'''
@@ -432,6 +466,7 @@ def get_netlist():
         pad_key = pad.GetParent().GetReference(), pad.GetPadName()
         netlist[pad_key] = pad.GetNetname(), pad.GetNetCode()
     return netlist
+
 
 class DumpDialog(wx.Dialog):
     '''Class for getting filenames for dumping netlist changes.'''
@@ -464,12 +499,14 @@ class DumpDialog(wx.Dialog):
                 parent=panel,
                 labelText='Netlist Changes File:',
                 buttonText='Browse',
-                toolTip='Drag-and-drop file or browse for file or enter file name.',
+                toolTip=
+                'Drag-and-drop file or browse for file or enter file name.',
                 dialogTitle='Select file to store netlist changes',
                 initialValue='',
                 fileMask=dump_file_wildcard,
                 fileMode=wx.FD_OPEN)
-            self.Bind(wx.EVT_FILEPICKER_CHANGED, self.dump_file_handler, self.dump_file_picker)
+            self.Bind(wx.EVT_FILEPICKER_CHANGED, self.dump_file_handler,
+                      self.dump_file_picker)
 
             self.dump_btn = wx.Button(panel, label='Dump')
             self.cancel_btn = wx.Button(panel, label='Cancel')
@@ -486,7 +523,8 @@ class DumpDialog(wx.Dialog):
             # Create a vertical sizer to hold everything in the panel.
             sizer = wx.BoxSizer(wx.VERTICAL)
             # sizer.Add(self.netlist_file_picker, 0, wx.ALL | wx.EXPAND, WIDGET_SPACING)
-            sizer.Add(self.dump_file_picker, 0, wx.ALL | wx.EXPAND, WIDGET_SPACING)
+            sizer.Add(self.dump_file_picker, 0, wx.ALL | wx.EXPAND,
+                      WIDGET_SPACING)
             sizer.Add(btn_sizer, 0, wx.ALL | wx.ALIGN_CENTER, WIDGET_SPACING)
 
             # Size the panel.
@@ -511,10 +549,13 @@ class DumpDialog(wx.Dialog):
         try:
             current_netlist = get_netlist()
             with open(self.dump_name, r'w') as fp:
-                for (ref, num), (new_net, new_code) in sorted(current_netlist.items()):
+                for (ref, num), (new_net, new_code) in sorted(
+                        current_netlist.items()):
                     old_net, old_code = original_netlist[(ref, num)]
                     if (new_net, new_code) != (old_net, old_code):
-                        fp.write('Part {ref}: Pad {num} moved from Net {old_net} ({old_code}) to Net {new_net} ({new_code}).\n'.format(**locals()))
+                        fp.write(
+                            'Part {ref}: Pad {num} moved from Net {old_net} ({old_code}) to Net {new_net} ({new_code}).\n'.
+                            format(**locals()))
         except Exception as e:
             debug_dialog(repr(e))
         self.Destroy()
@@ -522,9 +563,11 @@ class DumpDialog(wx.Dialog):
     def cancel(self, evt):
         self.Destroy()
 
+
 def dump_it_callback(evt):
     '''Compare pad wiring to original netlist and write changes to a file.'''
     DumpDialog()
+
 
 class WireIt(ActionPlugin):
     '''Plugin class for tools to change wiring between pads'''
@@ -546,41 +589,63 @@ class WireIt(ActionPlugin):
                 windows = wx.GetTopLevelWindows()
                 pcbnew = [w for w in windows if 'Pcbnew' in w.GetTitle()]
                 if len(pcbnew) != 1:
-                    raise Exception("Cannot find pcbnew window from title matching!")
+                    raise Exception(
+                        "Cannot find pcbnew window from title matching!")
                 return pcbnew[0]
 
             try:
                 # Find the toolbar in the PCBNEW window.
                 import inspect
                 import os
-                filename = inspect.getframeinfo(inspect.currentframe()).filename
+                filename = inspect.getframeinfo(
+                    inspect.currentframe()).filename
                 path = os.path.dirname(os.path.abspath(filename))
                 pcbwin = findPcbnewWindow()
                 top_toolbar = pcbwin.FindWindowById(ID_H_TOOLBAR)
 
                 # Add wire-creation button to toolbar.
                 wire_it_button = wx.NewId()
-                wire_it_button_bm = wx.Bitmap(os.path.join(path, 'WireIt_icons', 'wire_it.png'), wx.BITMAP_TYPE_PNG)
-                top_toolbar.AddTool(wire_it_button, "Wire It", wire_it_button_bm, "Connect pads with an airwire", wx.ITEM_NORMAL)
-                top_toolbar.Bind(wx.EVT_TOOL, wire_it_callback, id=wire_it_button)
+                wire_it_button_bm = wx.Bitmap(
+                    os.path.join(path, 'WireIt_icons', 'wire_it.png'),
+                    wx.BITMAP_TYPE_PNG)
+                top_toolbar.AddTool(
+                    wire_it_button, "Wire It", wire_it_button_bm,
+                    "Connect pads with an airwire", wx.ITEM_NORMAL)
+                top_toolbar.Bind(
+                    wx.EVT_TOOL, wire_it_callback, id=wire_it_button)
 
                 # Add wire-removal button.
                 cut_it_button = wx.NewId()
-                cut_it_button_bm = wx.Bitmap(os.path.join(path, 'WireIt_icons', 'cut_it.png'), wx.BITMAP_TYPE_PNG)
-                top_toolbar.AddTool(cut_it_button, "Cut It", cut_it_button_bm, "Disconnect airwires from pads", wx.ITEM_NORMAL)
-                top_toolbar.Bind(wx.EVT_TOOL, cut_it_callback, id=cut_it_button)
+                cut_it_button_bm = wx.Bitmap(
+                    os.path.join(path, 'WireIt_icons', 'cut_it.png'),
+                    wx.BITMAP_TYPE_PNG)
+                top_toolbar.AddTool(cut_it_button, "Cut It", cut_it_button_bm,
+                                    "Disconnect airwires from pads",
+                                    wx.ITEM_NORMAL)
+                top_toolbar.Bind(
+                    wx.EVT_TOOL, cut_it_callback, id=cut_it_button)
 
                 # Add pad-swap button.
                 swap_it_button = wx.NewId()
-                swap_it_button_bm = wx.Bitmap(os.path.join(path, 'WireIt_icons', 'swap_it.png'), wx.BITMAP_TYPE_PNG)
-                top_toolbar.AddTool(swap_it_button, "Swap It", swap_it_button_bm, "Swap airwires between two pads", wx.ITEM_NORMAL)
-                top_toolbar.Bind(wx.EVT_TOOL, swap_it_callback, id=swap_it_button)
+                swap_it_button_bm = wx.Bitmap(
+                    os.path.join(path, 'WireIt_icons', 'swap_it.png'),
+                    wx.BITMAP_TYPE_PNG)
+                top_toolbar.AddTool(
+                    swap_it_button, "Swap It", swap_it_button_bm,
+                    "Swap airwires between two pads", wx.ITEM_NORMAL)
+                top_toolbar.Bind(
+                    wx.EVT_TOOL, swap_it_callback, id=swap_it_button)
 
                 # Add button for dumping wiring changes to a file.
                 dump_it_button = wx.NewId()
-                dump_it_button_bm = wx.Bitmap(os.path.join(path, 'WireIt_icons', 'dump_it.png'), wx.BITMAP_TYPE_PNG)
-                top_toolbar.AddTool(dump_it_button, "Dump It", dump_it_button_bm, "Dump wiring changes to a file", wx.ITEM_NORMAL)
-                top_toolbar.Bind(wx.EVT_TOOL, dump_it_callback, id=dump_it_button)
+                dump_it_button_bm = wx.Bitmap(
+                    os.path.join(path, 'WireIt_icons', 'dump_it.png'),
+                    wx.BITMAP_TYPE_PNG)
+                top_toolbar.AddTool(
+                    dump_it_button, "Dump It", dump_it_button_bm,
+                    "Dump wiring changes to a file", wx.ITEM_NORMAL)
+                top_toolbar.Bind(
+                    wx.EVT_TOOL, dump_it_callback, id=dump_it_button)
 
                 top_toolbar.Realize()
 
@@ -593,7 +658,5 @@ class WireIt(ActionPlugin):
             except Exception as e:
                 debug_dialog('ERROR:' + repr(e))
 
+
 WireIt().register()
-
-
-
