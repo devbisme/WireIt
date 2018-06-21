@@ -35,7 +35,9 @@ import wx.lib.filebrowsebutton as FBB
 WIDGET_SPACING = 5
 
 
-def debug_dialog(msg):
+def debug_dialog(msg, exception=None):
+    if exception:
+        msg = '\n'.join((msg, str(exception), traceback.format.exc()))
     dlg = wx.MessageDialog(None, msg, '', wx.OK)
     dlg.ShowModal()
     dlg.Destroy()
@@ -248,6 +250,11 @@ def fillin_part_info_from_lib(ref, parts):
                     r'^ALIAS\s+([^\s]+\s+)*' + part.part + r'\s+', line))
 
 
+def get_project_directory():
+    '''Return the path of the PCB directory.'''
+    return os.path.dirname(GetBoard().GetFileName())
+
+
 def guess_netlist_file():
     '''Try to find the netlist file for this PCB.'''
 
@@ -323,7 +330,8 @@ class NetNameDialog(wx.Dialog):
         panel = wx.Panel(self)
 
         self.name_field = LabelledTextCtrl(panel, 'Net Name:', self.net_name,
-                                           'Enter name for new net.')
+                                        'Enter name for new net.')
+        self.name_field.ctrl.Bind(wx.EVT_TEXT_ENTER, self.name_field_handler, self.name_field.ctrl)
 
         self.ok_btn = wx.Button(panel, label='OK')
         self.cancel_btn = wx.Button(panel, label='Cancel')
@@ -352,6 +360,9 @@ class NetNameDialog(wx.Dialog):
 
         # Show the dialog box.
         self.ShowModal()
+
+    def name_field_handler(self, evt):
+        self.ok_btn.SetFocus() # After the net name is entered, set focus on the 'OK' button.
 
     def set_net_name(self, evt):
         self.net_name = self.name_field.ctrl.GetValue()
@@ -488,6 +499,7 @@ class DumpDialog(wx.Dialog):
             #     buttonText='Browse',
             #     toolTip='Drag-and-drop the netlist file associated with this layout or browse for file or enter file name.',
             #     dialogTitle='Select netlist file associated with this layout',
+            #     startDirectory=get_project_directory(),
             #     initialValue=guess_netlist_file(),
             #     fileMask=netlist_file_wildcard,
             #     fileMode=wx.FD_OPEN)
@@ -502,6 +514,7 @@ class DumpDialog(wx.Dialog):
                 toolTip=
                 'Drag-and-drop file or browse for file or enter file name.',
                 dialogTitle='Select file to store netlist changes',
+                startDirectory=get_project_directory(),
                 initialValue='',
                 fileMask=dump_file_wildcard,
                 fileMode=wx.FD_OPEN)
@@ -537,13 +550,14 @@ class DumpDialog(wx.Dialog):
 
             self.ShowModal()
         except Exception as e:
-            debug_dialog(repr(e))
+            debug_dialog('Something went wrong!', e)
 
     def netlist_file_handler(self, evt):
         pass
 
     def dump_file_handler(self, evt):
         self.dump_name = self.dump_file_picker.GetPath()
+        self.dump_btn.SetFocus()
 
     def do_dump(self, evt):
         try:
@@ -554,10 +568,10 @@ class DumpDialog(wx.Dialog):
                     old_net, old_code = original_netlist[(ref, num)]
                     if (new_net, new_code) != (old_net, old_code):
                         fp.write(
-                            'Part {ref}: Pad {num} moved from Net {old_net} ({old_code}) to Net {new_net} ({new_code}).\n'.
+                            'Part {ref}: Pad {num} moved from (net {old_code} "{old_net}") to (net {new_code} "{new_net}").\n'.
                             format(**locals()))
         except Exception as e:
-            debug_dialog(repr(e))
+            debug_dialog('Something went wrong!', e)
         self.Destroy()
 
     def cancel(self, evt):
@@ -656,7 +670,7 @@ class WireIt(ActionPlugin):
                 original_netlist = get_netlist()
 
             except Exception as e:
-                debug_dialog('ERROR:' + repr(e))
+                debug_dialog('Something went wrong!', e)
 
 
 WireIt().register()
