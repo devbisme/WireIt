@@ -77,15 +77,15 @@ class DnDFilePickerCtrl(FBB.FileBrowseButtonWithHistory, wx.FileDropTarget):
         self.SetValue(path)
 
     def OnChanged(self, evt):
-        wx.PostEvent(self,
-                     wx.PyCommandEvent(wx.EVT_FILEPICKER_CHANGED.typeId,
-                                       self.GetId()))
+        wx.PostEvent(
+            self,
+            wx.PyCommandEvent(wx.EVT_FILEPICKER_CHANGED.typeId, self.GetId()))
 
     def OnDropFiles(self, x, y, filenames):
         self.AddToHistory(filenames)
-        wx.PostEvent(self,
-                     wx.PyCommandEvent(wx.EVT_FILEPICKER_CHANGED.typeId,
-                                       self.GetId()))
+        wx.PostEvent(
+            self,
+            wx.PyCommandEvent(wx.EVT_FILEPICKER_CHANGED.typeId, self.GetId()))
 
 
 class LabelledTextCtrl(wx.BoxSizer):
@@ -113,13 +113,30 @@ class LabelledListBox(wx.BoxSizer):
         self.lbx = wx.ListBox(
             parent=parent,
             choices=choices,
-            style=wx.LB_EXTENDED | wx.LB_NEEDED_SB | wx.LB_SORT,
-            size=wx.Size(1, 50))
+            style=wx.LB_SINGLE | wx.LB_NEEDED_SB | wx.LB_SORT)
         self.lbx.SetToolTip(wx.ToolTip(tooltip))
         self.AddSpacer(WIDGET_SPACING)
         self.Add(self.lbl, 0, wx.ALL | wx.ALIGN_TOP)
         self.AddSpacer(WIDGET_SPACING)
         self.Add(self.lbx, 1, wx.ALL | wx.EXPAND)
+        self.AddSpacer(WIDGET_SPACING)
+
+
+class LabelledComboBox(wx.BoxSizer):
+    '''ListBox with label.'''
+
+    def __init__(self, parent, label, choices, tooltip=''):
+        wx.BoxSizer.__init__(self, wx.HORIZONTAL)
+        self.lbl = wx.StaticText(parent=parent, label=label)
+        self.cbx = wx.ComboBox(
+            parent=parent,
+            choices=choices,
+            style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER | wx.CB_SORT)
+        self.cbx.SetToolTip(wx.ToolTip(tooltip))
+        self.AddSpacer(WIDGET_SPACING)
+        self.Add(self.lbl, 0, wx.ALL | wx.ALIGN_TOP)
+        self.AddSpacer(WIDGET_SPACING)
+        self.Add(self.cbx, 1, wx.ALL | wx.EXPAND)
         self.AddSpacer(WIDGET_SPACING)
 
 
@@ -329,9 +346,11 @@ class NetNameDialog(wx.Dialog):
 
         panel = wx.Panel(self)
 
-        self.name_field = LabelledTextCtrl(panel, 'Net Name:', self.net_name,
-                                        'Enter name for new net.')
-        self.name_field.ctrl.Bind(wx.EVT_TEXT_ENTER, self.name_field_handler, self.name_field.ctrl)
+        self.name_field = LabelledComboBox(
+            panel, 'Net Name:', get_net_names(),
+            'Enter or select name for new net.')
+        self.name_field.cbx.Bind(wx.EVT_TEXT_ENTER, self.set_net_name,
+                                    self.name_field.cbx)
 
         self.ok_btn = wx.Button(panel, label='OK')
         self.cancel_btn = wx.Button(panel, label='Cancel')
@@ -361,11 +380,8 @@ class NetNameDialog(wx.Dialog):
         # Show the dialog box.
         self.ShowModal()
 
-    def name_field_handler(self, evt):
-        self.ok_btn.SetFocus() # After the net name is entered, set focus on the 'OK' button.
-
     def set_net_name(self, evt):
-        self.net_name = self.name_field.ctrl.GetValue()
+        self.net_name = self.name_field.cbx.GetValue()
         self.Destroy()
 
     def cancel(self, evt):
@@ -479,6 +495,11 @@ def get_netlist():
     return netlist
 
 
+def get_net_names():
+    '''Create a list of all the net names in the PCB.'''
+    return list(set([net[0] for net in get_netlist().values()]))
+
+
 class DumpDialog(wx.Dialog):
     '''Class for getting filenames for dumping netlist changes.'''
 
@@ -563,8 +584,8 @@ class DumpDialog(wx.Dialog):
         try:
             current_netlist = get_netlist()
             with open(self.dump_name, r'w') as fp:
-                for (ref, num), (new_net, new_code) in sorted(
-                        current_netlist.items()):
+                for (ref, num), (new_net,
+                                 new_code) in sorted(current_netlist.items()):
                     old_net, old_code = original_netlist[(ref, num)]
                     if (new_net, new_code) != (old_net, old_code):
                         fp.write(
