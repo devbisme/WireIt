@@ -150,6 +150,30 @@ class Pin(object):
     pass
 
 
+def get_netlist():
+    '''Create a dict with part ref & pad num as the key and attached net as the value.'''
+    netlist = {}
+    for pad in GetBoard().GetPads():
+        pad_key = pad.GetParent().GetReference(), pad.GetPadName()
+        netlist[pad_key] = pad.GetNetname(), pad.GetNetCode()
+    return netlist
+
+
+def get_net_names():
+    '''Create a list of all the net names in the PCB.'''
+    return list(set([net[0] for net in get_netlist().values()]))
+
+
+def get_pads_on_net(net):
+    '''Get all the pads attached to a net.'''
+    if isinstance(net, int):
+        return [pad for pad in GetBoard().GetPads() if pad.GetNetCode()==net]
+    elif isinstance(net, NETINFO_ITEM):
+        return [pad for pad in GetBoard().GetPads() if pad.GetNet()==net]
+    else:
+        return [pad for pad in GetBoard().GetPads() if pad.GetNetname()==net]
+
+
 def get_parts_from_netlist(netlist_file):
     '''Get part information from a netlist file.'''
 
@@ -340,15 +364,12 @@ class NetNameDialog(wx.Dialog):
     '''Class for getting a new net name from the user.'''
 
     def __init__(self, *args, **kwargs):
-        wx.Dialog.__init__(self, None, title="Set Net Name")
-
-        self.net_name = kwargs.pop('net_name', '')
+        wx.Dialog.__init__(self, None, title=kwargs.get('title'))
 
         panel = wx.Panel(self)
 
         self.name_field = LabelledComboBox(
-            panel, 'Net Name:', get_net_names(),
-            'Enter or select name for new net.')
+            panel, 'Net Name:', kwargs.get('net_name_choices'), kwargs.get('tool_tip'))
         self.name_field.cbx.Bind(wx.EVT_TEXT_ENTER, self.set_net_name,
                                     self.name_field.cbx)
 
@@ -392,46 +413,92 @@ class NetNameDialog(wx.Dialog):
 def wire_it_callback(evt):
     '''Create a wire between selected pads.'''
 
-    # Get the identifiers of the nets attached to the selected pads.
     brd = GetBoard()
     cnct = brd.GetConnectivity()
-    pads = [p for p in brd.GetPads() if p.IsSelected()]
-    net_codes = list(
-        set([p.GetNetCode() for p in brd.GetPads() if p.IsSelected()]))
-
-    # Remove the no-connect net from the list of net IDs.
+    all_net_names = get_net_names()  # Get all the net names on the board.
+    pads = [p for p in brd.GetPads() if p.IsSelected()] # Get selected pads.
+    net_codes = list(set([p.GetNetCode() for p in pads])) # Get nets for selected pads.
+    net_names = [brd.FindNet(net_code).GetNetname() for net_code in net_codes] # Get net names for selected pads.
     no_connect = 0  # PCBNEW ID for the no-connect net.
-    try:
-        net_codes.remove(no_connect)
-    except Exception:
-        pass
 
-    # Pads on different nets can't be wired together.
-    if len(net_codes) > 1:
-        debug_dialog("Can't connect pads on different nets")
-        return
+    num_nets = len(net_codes) # Number of nets attached to selected pads.
 
-    # Wire the selected pads together. If one or more of the pads
-    # is already connected to a net, then connect any unconnected pads
-    # to the same net. Otherwise, all the pads are currently unconnected
-    # so create a new net and connect all the pads to it.
-    try:
-        # Get the net if it exists.
-        net = brd.FindNet(net_codes[0])
-    except IndexError:
-        # If no net exists, ask the user for the name of the new net.
-        net_namer = NetNameDialog(parent=None)
-        # Exit if the user cancels the operation by not entering a name.
+    if num_nets == 1 and no_connect in net_codes:
+        # In this case, all the selected pads are currently unattached to nets
+        # so an existing net has to be selected or a new net has to be created
+        # that they can be attached to.
+        net_namer = NetNameDialog(title='Attach Pads to New or Existing Net',
+            tool_tip='Type or select name for the net to connect these pads.',
+            net_name_choices=all_net_names)
         if not net_namer.net_name:
+            # The user aborted the operation by hitting Cancel.
             return
-        # Create a new net with the name given by the user.
-        net = NETINFO_ITEM(brd, net_namer.net_name)
-        brd.Add(net)  # Add new net to the board.
+        if net_namer.net_name not in all_net_names:
+            # User entered a new net name, so create it.
+            net = NETINFO_ITEM(brd, net_namer.net_name)
+            brd.Add(net)
+        else:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        # Attach all the selected pads to the net.
+        for pad in pads:
+            cnct.Add(pad)
+            pad.SetNet(net)
 
-    # Connect all the selected pads to the net.
-    for pad in pads:
-        cnct.Add(pad)
-        pad.SetNet(net)
+    elif num_nets==1 and no_connect not in net_codes:
+        # In this case, all the selected pads are attached to the same net
+        # so the net will be renamed.
+        net_namer = NetNameDialog(title='Rename Net Attached to Pads',
+            tool_tip='Type or select a new name for the existing net connecting these pads.',
+            net_name_choices=all_net_names)
+        if not net_namer.net_name:
+            # The user aborted the operation by hitting Cancel.
+            return
+        if net_namer.net_name not in all_net_names:
+            # User entered a new net name, so create it.
+            net = NETINFO_ITEM(brd, net_namer.net_name)
+            brd.Add(net)
+        else:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        # Move *ALL* the pads on the net to the net given by the user.
+        for pad in get_pads_on_net(net_codes[0]):
+            pad.SetNet(net)
+
+    elif num_nets == 2 and no_connect in net_codes:
+        # In this case, some of the pads are unconnected and the others
+        # are all attached to the same net, so attach the unconnected pads
+        # to the net the others are attached to.
+        net_codes.remove(no_connect)  # Remove the no-connect net from the list.
+        net = brd.FindNet(net_codes[0])  # This is the net to attach pads to.
+        # Connect all the unconnected pads to the net.
+        for pad in pads:
+            if pad.GetNetCode() == no_connect:
+                cnct.Add(pad)
+                pad.SetNet(net)
+
+    else:
+        # In this case, the selected pads are connected to two or more nets
+        # so all the pads on these nets will be merged onto the same net.
+        net_namer = NetNameDialog(title='Merge Nets Attached to Pads',
+            tool_tip='Type or select name for the net created by merging the nets in this list.',
+            net_name_choices=net_names)
+        if not net_namer.net_name:
+            # The user aborted the operation by hitting Cancel.
+            return
+        if net_namer.net_name not in all_net_names:
+            # User entered a new net name, so create it.
+            net = NETINFO_ITEM(brd, net_namer.net_name)
+            brd.Add(net)
+            net_names.append(net_namer.net_name) # Add it to the list of net names.
+        else:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        # Get *ALL* the pads attached to the nets.
+        pads = [p for p in brd.GetPads() if p.GetNetname() in net_names]
+        # Move all the pads to the selected net.
+        for pad in pads:
+            pad.SetNet(net)
 
     # Update the board to show the new connections.
     brd.BuildListOfNets()
@@ -484,20 +551,6 @@ def swap_it_callback(evt):
 
 
 original_netlist = {}
-
-
-def get_netlist():
-    '''Create a dict with part ref & pad num as the key and attached net as the value.'''
-    netlist = {}
-    for pad in GetBoard().GetPads():
-        pad_key = pad.GetParent().GetReference(), pad.GetPadName()
-        netlist[pad_key] = pad.GetNetname(), pad.GetNetCode()
-    return netlist
-
-
-def get_net_names():
-    '''Create a list of all the net names in the PCB.'''
-    return list(set([net[0] for net in get_netlist().values()]))
 
 
 class DumpDialog(wx.Dialog):
