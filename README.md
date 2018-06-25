@@ -1,6 +1,6 @@
 # WireIt Plugin
 
-This PCBNEW plugin lets you add wires between pads on a PCB, delete them, and swap wires between pads.
+This PCBNEW plugin lets you add wires (or *nets*) between pads on a PCB, delete them, and swap wires between pads.
 This is helpful for physically connecting sets of related pins when doing
 the layout of high pin-count packages such as FPGAs.
 
@@ -29,7 +29,7 @@ This adds a button to the PCBNEW window for each of the four WireIt tools:
 
 ### The WireIt Tool
 
-This tool is used to create an *airwire* between two or more pads.
+This tool is connects pads to nets.
 It is used as follows:
 
 1. Select one or more pads on the PCB using the shift-click mouse operation.
@@ -38,18 +38,24 @@ It is used as follows:
 After clicking on the WireIt button, one of the following will happen:
 
 * If all of the pads were unconnected, a dialog window will appear where you can
-  type in the name of the new net that will connect them. Pressing the `OK`
-  button will cause an airwire to appear between the selected pads.
-  Pressing `Cancel` will abort the creation of the airwire.
-* If one or more of the pads are already connected to the *same* net, then
+  type in the name of the new net that will connect them or select the name of an
+  existing net. Pressing the `OK` button will cause an airwire to appear between
+  the selected pads. Pressing `Cancel` will abort the creation of the airwire.
+* If all the pads were already connected to the *same net*, then a dialog
+  window will appear that will allow you to enter a new name for the net, or
+  select an existing net name. Then those pads *and any other pads on the original net*
+  will be moved to the new net.
+* If one or more of the pads were already connected to one net, then
   any unconnected pads will be added to that net. No dialog window for naming
   the net will appear because the net already has a name.
 * If two or more of the pads are already connected to *different* nets, then
-  an error will be raised because merging nets together is not allowed.
+  those nets will be merged and *all* the pads on those nets will be moved
+  to the merged net. A dialog window will appear that lets you select the name
+  for the merged net.
 
 ### The CutIt Tool
 
-This tool is used to remove an airwire from one or more pads.
+This tool removes one or more pads from a net.
 It is used as follows:
 
 1. Select one or more pads on the PCB using the shift-click mouse operation.
@@ -60,7 +66,7 @@ will be removed and the pads will become unconnected.
 
 ### The SwapIt Tool
 
-This tool is used to swap the airwires connected to two pads.
+This tool swaps the nets connected to two pads.
 It is used as follows:
 
 1. Select exactly two pads using the shift-click mouse operation.
@@ -103,6 +109,10 @@ None yet. Why not be the first?
 
 
 ## History
+
+### 0.2.0 (2018-06-25)
+
+* Net merging/renaming added.
 
 ### 0.1.0 (2018-06-19)
 
