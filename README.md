@@ -37,18 +37,19 @@ It is used as follows:
 
 After clicking on the WireIt button, one of the following will happen:
 
-* If all of the pads were unconnected, a dialog window will appear where you can
+* If all of the pads are unconnected, a dialog window will appear where you can
   type in the name of the new net that will connect them or select the name of an
   existing net. Pressing the `OK` button will cause an airwire to appear between
   the selected pads. Pressing `Cancel` will abort the creation of the airwire.
-* If all the pads/tracks/zones were already connected to the *same net*, then a dialog
-  window will appear that will allow you to enter a new name for the net, or
+* If all the pads/tracks/zones are already connected to the *same net*, then a dialog
+  window will appear that will allow you to enter a new name for that net, or
   select an existing net name. Then those pads/tracks/zones *and any other 
   pads/tracks/zones on the original net*  will be moved to the new net.
-* If one or more of the pads/tracks/zones were already connected to one net, then
-  any unconnected pads will be added to that net. No dialog window for naming
-  the net will appear because the net already has a name.
-* If two or more of the pads/tracks/zones were already connected to *different* nets, then
+* If some of the pads/tracks/zones are already connected to a single net while
+  the remaining pads are unconnected, then
+  the unconnected pads will be added to that net. No dialog window for naming
+  the net will appear because it already has a name.
+* If two or more of the pads/tracks/zones are already connected to *different* nets, then
   those nets will be merged and *all* the pads/tracks/zones on those nets will be moved
   to the merged net. A dialog window will appear that lets you select the name
   for the merged net.
@@ -61,7 +62,7 @@ It is used as follows:
 1. Select one or more pads on the PCB using the shift-click mouse operation.
 2. Click on the ![](WireIt_icons/cut_it.png) button.
 
-After clicking on the CutIt button, any airwires atached to the selected pads
+After clicking on the CutIt button, any airwires attached to the selected pads
 will be removed and the pads will become unconnected.
 
 ### The SwapIt Tool
@@ -90,6 +91,16 @@ changed to the file. (Any previous contents of the file will be overwritten.)
 Then you are responsible for manually backannotating the netlist changes into
 the schematic associated with this PCB layout.
 Clicking the `Cancel` button aborts the writing of the file.
+
+### Some Other Operations
+
+#### Moving Pads From One Net to Another
+
+1. Select the pads.
+2. Use the CutIt tool to disconnect the pads from any nets.
+3. Select the pads again (they'll be deselected after the CutIt operation).
+4. Select a pad, track or zone on the net you want to attach the pads to.
+5. Click on the WireIt tool to attach the pads to the selected net.
  
 ### Example
 
