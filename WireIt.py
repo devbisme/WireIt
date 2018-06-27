@@ -164,14 +164,21 @@ def get_net_names():
     return list(set([net[0] for net in get_netlist().values()]))
 
 
-def get_pads_on_net(net):
-    '''Get all the pads attached to a net.'''
-    if isinstance(net, int):
-        return [pad for pad in GetBoard().GetPads() if pad.GetNetCode()==net]
-    elif isinstance(net, NETINFO_ITEM):
-        return [pad for pad in GetBoard().GetPads() if pad.GetNet()==net]
-    else:
-        return [pad for pad in GetBoard().GetPads() if pad.GetNetname()==net]
+def get_stuff_on_nets(*nets):
+    '''Get all the pads, tracks, zones attached to a net.'''
+    brd = GetBoard()
+    all_stuff = list(brd.GetPads())
+    all_stuff.extend(brd.GetTracks())
+    all_stuff.extend(brd.Zones())
+    stuff = []
+    for net in nets:
+        if isinstance(net, int):
+            stuff.extend([thing for thing in all_stuff if thing.GetNetCode()==net])
+        elif isinstance(net, NETINFO_ITEM):
+            stuff.extend([thing for thing in all_stuff if thing.GetNet()==net])
+        else:
+            stuff.extend([thing for thing in all_stuff if thing.GetNetname()==net])
+    return stuff
 
 
 def get_parts_from_netlist(netlist_file):
@@ -417,8 +424,13 @@ def wire_it_callback(evt):
     cnct = brd.GetConnectivity()
     all_net_names = get_net_names()  # Get all the net names on the board.
     pads = [p for p in brd.GetPads() if p.IsSelected()] # Get selected pads.
-    net_codes = list(set([p.GetNetCode() for p in pads])) # Get nets for selected pads.
-    net_names = [brd.FindNet(net_code).GetNetname() for net_code in net_codes] # Get net names for selected pads.
+    tracks = [t for t in brd.GetTracks() if t.IsSelected()]  # Get selected tracks.
+    zones = [z for z in brd.Zones() if z.IsSelected()]  # Get selected zones.
+    net_codes = [p.GetNetCode() for p in pads] # Get nets for selected pads.
+    net_codes.extend([t.GetNetCode() for t in tracks]) # Add nets for selected tracks.
+    net_codes.extend([z.GetNetCode() for z in zones]) # Add nets for selected zones.
+    net_codes = list(set(net_codes))  # Remove duplicate nets.
+    net_names = [brd.FindNet(net_code).GetNetname() for net_code in net_codes] # Get net names for selected pads, tracks, zones.
     no_connect = 0  # PCBNEW ID for the no-connect net.
 
     num_nets = len(net_codes) # Number of nets attached to selected pads.
@@ -433,13 +445,13 @@ def wire_it_callback(evt):
         if not net_namer.net_name:
             # The user aborted the operation by hitting Cancel.
             return
-        if net_namer.net_name not in all_net_names:
+        if net_namer.net_name in all_net_names:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        else:
             # User entered a new net name, so create it.
             net = NETINFO_ITEM(brd, net_namer.net_name)
             brd.Add(net)
-        else:
-            # User entered the name of an existing net.
-            net = brd.FindNet(net_namer.net_name)
         # Attach all the selected pads to the net.
         for pad in pads:
             cnct.Add(pad)
@@ -454,16 +466,16 @@ def wire_it_callback(evt):
         if not net_namer.net_name:
             # The user aborted the operation by hitting Cancel.
             return
-        if net_namer.net_name not in all_net_names:
+        if net_namer.net_name in all_net_names:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        else:
             # User entered a new net name, so create it.
             net = NETINFO_ITEM(brd, net_namer.net_name)
             brd.Add(net)
-        else:
-            # User entered the name of an existing net.
-            net = brd.FindNet(net_namer.net_name)
-        # Move *ALL* the pads on the net to the net given by the user.
-        for pad in get_pads_on_net(net_codes[0]):
-            pad.SetNet(net)
+        # Move *ALL* the pads, tracks, zones on the net to the net given by the user.
+        for thing in get_stuff_on_nets(net_codes[0]):
+            thing.SetNet(net)
 
     elif num_nets == 2 and no_connect in net_codes:
         # In this case, some of the pads are unconnected and the others
@@ -486,19 +498,17 @@ def wire_it_callback(evt):
         if not net_namer.net_name:
             # The user aborted the operation by hitting Cancel.
             return
-        if net_namer.net_name not in all_net_names:
+        if net_namer.net_name in all_net_names:
+            # User entered the name of an existing net.
+            net = brd.FindNet(net_namer.net_name)
+        else:
             # User entered a new net name, so create it.
             net = NETINFO_ITEM(brd, net_namer.net_name)
             brd.Add(net)
             net_names.append(net_namer.net_name) # Add it to the list of net names.
-        else:
-            # User entered the name of an existing net.
-            net = brd.FindNet(net_namer.net_name)
-        # Get *ALL* the pads attached to the nets.
-        pads = [p for p in brd.GetPads() if p.GetNetname() in net_names]
-        # Move all the pads to the selected net.
-        for pad in pads:
-            pad.SetNet(net)
+        # Move *ALL* the pads, tracks, zones attached to the original nets to the selected net.
+        for thing in get_stuff_on_nets(*net_names):
+            thing.SetNet(net)
 
     # Update the board to show the new connections.
     brd.BuildListOfNets()
