@@ -29,10 +29,10 @@ This adds a button to the PCBNEW window for each of the four WireIt tools:
 
 ### The WireIt Tool
 
-This tool is connects pads to nets.
+This tool connects pads to nets.
 It is used as follows:
 
-1. Select one or more pads on the PCB using the shift-click mouse operation.
+1. Select one or more pads, routed tracks, or zones on the PCB using the shift-click mouse operation.
 2. Click on the ![](WireIt_icons/wire_it.png) button.
 
 After clicking on the WireIt button, one of the following will happen:
@@ -41,15 +41,15 @@ After clicking on the WireIt button, one of the following will happen:
   type in the name of the new net that will connect them or select the name of an
   existing net. Pressing the `OK` button will cause an airwire to appear between
   the selected pads. Pressing `Cancel` will abort the creation of the airwire.
-* If all the pads were already connected to the *same net*, then a dialog
+* If all the pads/tracks/zones were already connected to the *same net*, then a dialog
   window will appear that will allow you to enter a new name for the net, or
-  select an existing net name. Then those pads *and any other pads on the original net*
-  will be moved to the new net.
-* If one or more of the pads were already connected to one net, then
+  select an existing net name. Then those pads/tracks/zones *and any other 
+  pads/tracks/zones on the original net*  will be moved to the new net.
+* If one or more of the pads/tracks/zones were already connected to one net, then
   any unconnected pads will be added to that net. No dialog window for naming
   the net will appear because the net already has a name.
-* If two or more of the pads are already connected to *different* nets, then
-  those nets will be merged and *all* the pads on those nets will be moved
+* If two or more of the pads/tracks/zones were already connected to *different* nets, then
+  those nets will be merged and *all* the pads/tracks/zones on those nets will be moved
   to the merged net. A dialog window will appear that lets you select the name
   for the merged net.
 
@@ -109,6 +109,11 @@ None yet. Why not be the first?
 
 
 ## History
+
+### 0.3.0 (2018-06-27)
+
+* Unconnected pads can now be attached to routed tracks.
+* Merging/renaming nets will also merge/rename all associated tracks and zones that are on those nets.
 
 ### 0.2.0 (2018-06-25)
 
