@@ -125,6 +125,10 @@ None yet. Why not be the first?
 
 ## History
 
+### 0.4.0 (2020-05-19)
+
+* Fixed erroneous access to data object whose memory had been freed.
+
 ### 0.3.0 (2018-06-27)
 
 * Unconnected pads can now be attached to routed tracks.
