@@ -17,11 +17,18 @@ the layout of high pin-count packages such as FPGAs.
 
 ## Installation
 
-Just copy `WireIt.py` file and the `WireIt_icons` directory to one
+Just copy the `WireIt.py` file and the `WireIt_icons` directory to one
 of the following directories:
 
 * Windows: `kicad/share/kicad/scripting/plugins`.
-* Linux: `kicad/scripting/plugins`.
+* Linux: `kicad/scripting/plugins` or `~/.kicad_plugins`.
+
+As an alternative, you can also go into any of the above directories and just clone
+`WireIt` from GitHub:
+
+```bash
+git clone https://github.com/xesscorp/WireIt.git
+```
 
 
 ## Usage

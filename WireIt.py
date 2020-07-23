@@ -726,8 +726,7 @@ class WireIt(ActionPlugin):
 
                 filename = inspect.getframeinfo(inspect.currentframe()).filename
                 path = os.path.dirname(os.path.abspath(filename))
-                pcbwin = findPcbnewWindow()
-                top_toolbar = pcbwin.FindWindowById(ID_H_TOOLBAR)
+                top_toolbar = wx.FindWindowById(ID_H_TOOLBAR, parent=findPcbnewWindow())
 
                 # Add wire-creation button to toolbar.
                 wire_it_button = wx.NewId()
