@@ -28,6 +28,7 @@ import sys
 import os
 import os.path
 import re
+import traceback
 import wx
 import wx.aui
 import wx.lib.filebrowsebutton as FBB
