@@ -437,16 +437,16 @@ class NetNameDialog(wx.Dialog):
 
 
 def wire_it_callback(evt):
-    """Create a wire between selected pads."""
+    """Create a wire between selected pads and/or vias."""
 
     brd = GetBoard()
     cnct = brd.GetConnectivity()
     all_net_names = get_net_names()  # Get all the net names on the board.
     pads = [p for p in brd.GetPads() if p.IsSelected()]  # Get selected pads.
-    tracks = [t for t in brd.GetTracks() if t.IsSelected()]  # Get selected tracks.
+    tracks = [t for t in brd.GetTracks() if t.IsSelected()]  # Get selected tracks and vias.
     zones = [z for z in brd.Zones() if z.IsSelected()]  # Get selected zones.
     net_codes = [p.GetNetCode() for p in pads]  # Get nets for selected pads.
-    net_codes.extend([t.GetNetCode() for t in tracks])  # Add nets for selected tracks.
+    net_codes.extend([t.GetNetCode() for t in tracks])  # Add nets for selected tracks and vias.
     net_codes.extend([z.GetNetCode() for z in zones])  # Add nets for selected zones.
     net_codes = list(set(net_codes))  # Remove duplicate nets.
     net_names = [
@@ -455,6 +455,8 @@ def wire_it_callback(evt):
     no_connect = 0  # PCBNEW ID for the no-connect net.
 
     num_nets = len(net_codes)  # Number of nets attached to selected pads.
+    vias = [t for t in tracks if (type(t) is VIA)]  # Get selected vias.
+    pads.extend(vias)
 
     if num_nets == 1 and no_connect in net_codes:
         # In this case, all the selected pads are currently unattached to nets
@@ -547,12 +549,14 @@ def wire_it_callback(evt):
 
 
 def cut_it_callback(evt):
-    """Remove wires from selected pads."""
+    """Remove wires from selected pads and vias."""
 
     # Get the selected pads.
     brd = GetBoard()
     cnct = brd.GetConnectivity()
     pads = [p for p in brd.GetPads() if p.IsSelected()]
+    vias = [t for t in brd.GetTracks() if t.IsSelected() and (type(t) is VIA)]  # Get selected vias.
+    pads.extend(vias)
 
     # Disconnect the pads by moving them to the no-connect net.
     no_connect = 0  # PCBNEW ID for the no-connect net.
