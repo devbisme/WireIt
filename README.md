@@ -123,7 +123,7 @@ The video below demonstrates the use of the WireIt tools:
 
 ### Development Lead
 
-* XESS Corp. <info@xess.com>
+* Dave Vandenbout <devb@xess.com>
 
 ### Contributors
 
