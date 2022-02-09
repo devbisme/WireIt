@@ -719,9 +719,9 @@ class WireIt(ActionPlugin):
             def findPcbnewWindow():
                 """Find the window for the PCBNEW application."""
                 windows = wx.GetTopLevelWindows()
-                pcbnew = [w for w in windows if "PCB Editor" in w.GetTitle()]
+                pcbnew = [w for w in windows if "PCB Editor" in w.GetTitle() or "Pcbnew" in w.GetTitle()]
                 if len(pcbnew) != 1:
-                    raise Exception("Cannot find PCB Editor window from title matching!")
+                    raise Exception("Cannot find PCB Editor or Pcbnew window from title matching!")
                 return pcbnew[0]
 
             try:
