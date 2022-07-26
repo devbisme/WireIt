@@ -39,8 +39,9 @@ if hasattr(wx, "GetLibraryVersionInfo"):
     WX_VERSION = wx.GetLibraryVersionInfo()  # type: wx.VersionInfo
     WX_VERSION = (WX_VERSION.Major, WX_VERSION.Minor, WX_VERSION.Micro)
 else:
-    # old kicad used this (exact version doesnt matter)
+    # old kicad used this (exact version doesn't matter)
     WX_VERSION = (3, 0, 2)
+
 
 def get_btn_bitmap(bitmap):
     path = os.path.join(os.path.dirname(__file__), "WireIt_icons", bitmap)
@@ -50,6 +51,8 @@ def get_btn_bitmap(bitmap):
         return wx.BitmapBundle(png)
     else:
         return png
+
+
 def debug_dialog(msg, exception=None):
     if exception:
         msg = "\n".join((msg, str(exception), traceback.format_exc()))
@@ -455,21 +458,40 @@ def wire_it_callback(evt):
 
     brd = GetBoard()
     cnct = brd.GetConnectivity()
-    all_net_names = get_net_names()  # Get all the net names on the board.
-    pads = [p for p in brd.GetPads() if p.IsSelected()]  # Get selected pads.
-    tracks = [t for t in brd.GetTracks() if t.IsSelected()]  # Get selected tracks and vias.
-    zones = [z for z in brd.Zones() if z.IsSelected()]  # Get selected zones.
-    net_codes = [p.GetNetCode() for p in pads]  # Get nets for selected pads.
-    net_codes.extend([t.GetNetCode() for t in tracks])  # Add nets for selected tracks and vias.
-    net_codes.extend([z.GetNetCode() for z in zones])  # Add nets for selected zones.
-    net_codes = list(set(net_codes))  # Remove duplicate nets.
-    net_names = [
-        brd.FindNet(net_code).GetNetname() for net_code in net_codes
-    ]  # Get net names for selected pads, tracks, zones.
+    
+    # Get all the net names on the board.
+    all_net_names = get_net_names()
+    
+    # Get selected pads.
+    pads = [p for p in brd.GetPads() if p.IsSelected()]
+
+    # Get selected tracks and vias.
+    tracks = [t for t in brd.GetTracks() if t.IsSelected()]
+
+    # Get selected zones.
+    zones = [z for z in brd.Zones() if z.IsSelected()]
+    
+    # Get nets for selected pads.
+    net_codes = [p.GetNetCode() for p in pads]
+
+    # Add nets for selected tracks and vias.    
+    net_codes.extend([t.GetNetCode() for t in tracks])
+
+    # Add nets for selected zones.
+    net_codes.extend([z.GetNetCode() for z in zones])
+    
+    # Remove duplicate nets.
+    net_codes = list(set(net_codes))
+    
+    # Get net names for selected pads, tracks, zones.
+    net_names = [brd.FindNet(net_code).GetNetname() for net_code in net_codes]
+
     no_connect = 0  # PCBNEW ID for the no-connect net.
 
     num_nets = len(net_codes)  # Number of nets attached to selected pads.
-    vias = [t for t in tracks if (type(t) is VIA)]  # Get selected vias.
+    
+    # Get selected vias.
+    vias = [t for t in tracks if (type(t) is VIA)]
     pads.extend(vias)
 
     if num_nets == 1 and no_connect in net_codes:
@@ -569,7 +591,12 @@ def cut_it_callback(evt):
     brd = GetBoard()
     cnct = brd.GetConnectivity()
     pads = [p for p in brd.GetPads() if p.IsSelected()]
-    vias = [t for t in brd.GetTracks() if t.IsSelected() and (type(t) is VIA)]  # Get selected vias.
+
+	# Get selected vias.
+    vias = [
+        t for t in brd.GetTracks() if t.IsSelected() and (type(t) is VIA)
+    ]
+
     pads.extend(vias)
 
     # Disconnect the pads by moving them to the no-connect net.
@@ -615,8 +642,18 @@ class DumpDialog(wx.Dialog):
 
     def __init__(self, *args, **kwargs):
         try:
-            # wx.Dialog.__init__(self, None, title="Dump Wiring Changes")
-            wx.Dialog.__init__ ( self, None, id = wx.ID_ANY, title = u"Dump Wiring Changes", pos = wx.DefaultPosition, size = wx.Size( 100,100 ), style = wx.CAPTION|wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+            wx.Dialog.__init__(
+                self,
+                None,
+                id=wx.ID_ANY,
+                title=u"Dump Wiring Changes",
+                pos=wx.DefaultPosition,
+                size=wx.Size(100, 100),
+                style=wx.CAPTION
+                | wx.CLOSE_BOX
+                | wx.DEFAULT_DIALOG_STYLE
+                | wx.RESIZE_BORDER,
+            )
             self.netlist_name = kwargs.pop("netlist_name", "")
             self.dump_name = kwargs.pop("dump_name", "")
 
@@ -713,8 +750,6 @@ class DumpDialog(wx.Dialog):
 def dump_it_callback(evt):
     """Compare pad wiring to original netlist and write changes to a file."""
     DumpDialog()
-    
-
 
 
 class WireIt(ActionPlugin):
@@ -732,30 +767,16 @@ class WireIt(ActionPlugin):
         # Add Wire-It buttons to toolbar if they aren't there already.
         if not self.buttons:
 
-            # def findPcbnewWindow():
-                # """Find the window for the PCBNEW application."""
-                # windows = wx.GetTopLevelWindows()
-                # pcbnew = [w for w in windows if "Pcbnew" in w.GetTitle()]
-                # if len(pcbnew) != 1:
-                    # raise Exception("Cannot find pcbnew window from title matching!")
-                # return pcbnew[0]
-
             try:
                 # Find the toolbar in the PCBNEW window.
-                import inspect
-                import os
-                _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetName() == 'PcbFrame'][0]
-                filename = inspect.getframeinfo(inspect.currentframe()).filename
-                # path = os.path.dirname(os.path.abspath(filename))
+                _pcbnew_frame = [
+                    x for x in wx.GetTopLevelWindows() if x.GetName() == "PcbFrame"
+                ][0]
                 top_toolbar = wx.FindWindowById(ID_H_TOOLBAR, parent=_pcbnew_frame)
 
                 # Add wire-creation button to toolbar.
                 wire_it_button = wx.NewId()
-                # wire_it_button_bm = wx.Bitmap(
-                    # os.path.join(path, "WireIt_icons", "wire_it.png"),
-                    # wx.BITMAP_TYPE_PNG,
-                # )
-                wire_it_button_bm=get_btn_bitmap("wire_it.png")
+                wire_it_button_bm = get_btn_bitmap("wire_it.png")
                 top_toolbar.AddTool(
                     wire_it_button,
                     "Wire It",
@@ -767,10 +788,7 @@ class WireIt(ActionPlugin):
 
                 # Add wire-removal button.
                 cut_it_button = wx.NewId()
-                # cut_it_button_bm = wx.Bitmap(
-                    # os.path.join(path, "WireIt_icons", "cut_it.png"), wx.BITMAP_TYPE_PNG
-                # )
-                cut_it_button_bm=get_btn_bitmap("cut_it.png")
+                cut_it_button_bm = get_btn_bitmap("cut_it.png")
                 top_toolbar.AddTool(
                     cut_it_button,
                     "Cut It",
@@ -782,11 +800,7 @@ class WireIt(ActionPlugin):
 
                 # Add pad-swap button.
                 swap_it_button = wx.NewId()
-                # swap_it_button_bm = wx.Bitmap(
-                    # os.path.join(path, "WireIt_icons", "swap_it.png"),
-                    # wx.BITMAP_TYPE_PNG,
-                # )
-                swap_it_button_bm=get_btn_bitmap("swap_it.png")
+                swap_it_button_bm = get_btn_bitmap("swap_it.png")
                 top_toolbar.AddTool(
                     swap_it_button,
                     "Swap It",
@@ -798,11 +812,7 @@ class WireIt(ActionPlugin):
 
                 # Add button for dumping wiring changes to a file.
                 dump_it_button = wx.NewId()
-                # dump_it_button_bm = wx.Bitmap(
-                    # os.path.join(path, "WireIt_icons", "dump_it.png"),
-                    # wx.BITMAP_TYPE_PNG,
-                # )
-                dump_it_button_bm=get_btn_bitmap("dump_it.png")
+                dump_it_button_bm = get_btn_bitmap("dump_it.png")
                 top_toolbar.AddTool(
                     dump_it_button,
                     "Dump It",
@@ -821,7 +831,9 @@ class WireIt(ActionPlugin):
                 original_netlist = get_netlist()
 
             except Exception as e:
-                debug_dialog("Something went wrong!", e)
+                debug_dialog(
+                    "Trying to install toolbar buttons but something went wrong!", e
+                )
 
 
 WireIt().register()
