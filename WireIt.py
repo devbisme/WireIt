@@ -491,7 +491,7 @@ def wire_it_callback(evt):
     num_nets = len(net_codes)  # Number of nets attached to selected pads.
     
     # Get selected vias.
-    vias = [t for t in tracks if (type(t) is VIA)]
+    vias = [t for t in tracks if (type(t) is PCB_VIA)]
     pads.extend(vias)
 
     if num_nets == 1 and no_connect in net_codes:
@@ -594,7 +594,7 @@ def cut_it_callback(evt):
 
 	# Get selected vias.
     vias = [
-        t for t in brd.GetTracks() if t.IsSelected() and (type(t) is VIA)
+        t for t in brd.GetTracks() if t.IsSelected() and (type(t) is PCB_VIA)
     ]
 
     pads.extend(vias)
