@@ -2,7 +2,7 @@
 
 # MIT license
 #
-# Copyright (C) 2018-2021 by Dave Vandenbout.
+# Copyright (C) by Dave Vandenbout.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import pcbnew
 from pcbnew import *
 
 import sys
@@ -34,6 +35,10 @@ import wx.aui
 import wx.lib.filebrowsebutton as FBB
 
 WIDGET_SPACING = 5
+
+# Support KiCad 7 while maintaining compatibility with previous versions.
+if hasattr(pcbnew, "PCB_VIA"):
+    VIA = pcbnew.PCB_VIA
 
 if hasattr(wx, "GetLibraryVersionInfo"):
     WX_VERSION = wx.GetLibraryVersionInfo()  # type: wx.VersionInfo
@@ -142,7 +147,7 @@ class LabelledListBox(wx.BoxSizer):
 
 
 class LabelledComboBox(wx.BoxSizer):
-    """ListBox with label."""
+    """ComboBox with label."""
 
     def __init__(self, parent, label, choices, tooltip=""):
         wx.BoxSizer.__init__(self, wx.HORIZONTAL)

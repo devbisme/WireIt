@@ -1,9 +1,10 @@
 # WireIt Plugin
 
-This PCBNEW plugin lets you add wires (or *nets*) between pads on a PCB, delete them, and swap wires between pads.
+This PCBNEW plugin lets you add airwires (or *nets*) between pads on a PCB, delete them, and swap them between pads.
 This is helpful for physically connecting sets of related pins when doing
 the layout of high pin-count packages such as FPGAs.
 
+* Compatible with KiCad 4, 5, 6 and 7.
 * Free software: MIT license
 
 
@@ -20,8 +21,14 @@ the layout of high pin-count packages such as FPGAs.
 Just copy the `WireIt.py` file and the `WireIt_icons` directory to one
 of the following directories:
 
-* Windows: `kicad/share/kicad/scripting/plugins`.
-* Linux: `kicad/scripting/plugins` or `~/.kicad_plugins`.
+* Windows:
+  + %KICAD_INSTALL_PATH%/share/kicad/scripting/plugins
+  + %APPDATA%/Roaming/kicad/scripting/plugins
+
+* Linux:
+  + /usr/share/kicad/scripting/plugins/`
+  + ~/.kicad/scripting/plugins
+  + ~/.kicad_plugins/`
 
 As an alternative, you can also go into any of the above directories and just clone
 `WireIt` from GitHub:
@@ -75,6 +82,7 @@ It is used as follows:
 
 After clicking on the CutIt button, any airwires attached to the selected pads
 will be removed and the pads will become unconnected.
+Any routed traces to these pads will remain as-is and will not be removed.
 
 ### The SwapIt Tool
 
@@ -87,6 +95,7 @@ It is used as follows:
 After clicking on the SwapIt button, the airwires attached to the two pads will
 be exchanged with the first pad becoming attached to the net of the second pad
 and vice-versa.
+Any routed traces to the swapped pads will remain as-is and will not be rerouted.
 
 ### The DumpIt Tool
 
