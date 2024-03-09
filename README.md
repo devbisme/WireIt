@@ -136,10 +136,36 @@ The video below demonstrates the use of the WireIt tools:
 
 ### Contributors
 
-None yet. Why not be the first?
+Github keeps a [list](https://github.com/devbisme/WireIt/graphs/contributors). Go look at it.
 
 
 ## History
+
+### 0.10.0 (2024-03-09)
+
+* Update history and list of contributors.
+
+### 0.9.0 (2023-07-27)
+
+* Fixed compatibility with wxwidgets 3.1.6.
+* Store pcbnew.PCB_VIA as VIA to maintain compatibility with KiCad 4, 5, 6 and 7.
+
+### 0.8.0 (2022-02-10)
+
+* Support both PCBNEW and PCB Editor.
+
+### 0.7.0 (2021-09-15)
+
+* Added support for vias.
+* Fixed exception dialog.
+
+### 0.6.0 (2021-02-26)
+
+* Added import of traceback module.
+
+### 0.5.0 (2020-07-23)
+
+* WireIt icons moved from KiCad window to PCBNEW's horizontal toolbar.
 
 ### 0.4.0 (2020-05-19)
 
