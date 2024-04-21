@@ -181,7 +181,12 @@ def get_netlist():
     """Create a dict with part ref & pad num as the key and attached net as the value."""
     netlist = {}
     for pad in GetBoard().GetPads():
-        pad_key = pad.GetParent().GetReference(), pad.GetPadName()
+        parent = pad.GetParent()
+        if type(parent) == BOARD_ITEM_CONTAINER:  # KiCAD 8
+            footprint = Cast_to_FOOTPRINT(pad.GetParent())
+        else:  # KiCAD 7 and earlier
+            footprint = parent
+        pad_key = footprint.GetReference(), pad.GetPadName()
         netlist[pad_key] = pad.GetNetname(), pad.GetNetCode()
     return netlist
 
